@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Transaction {
+  id       Int      @id @default(autoincrement())
+  amount   Float
+  type     String
+  category String
+  note     String?
+  date     DateTime @default(now())
+}
+
+model Budget {
+  id        Int      @id @default(autoincrement())
+  category  String   @unique
+  amount    Float
+  createdAt DateTime @default(now())
+}
+
+model SavingsGoal {
+  id            Int                   @id @default(autoincrement())
+  name          String
+  target        Float
+  createdAt     DateTime              @default(now())
+  contributions SavingsContribution[]
+}
+
+model SavingsContribution {
+  id     Int      @id @default(autoincrement())
+  amount Float
+  date   DateTime @default(now())
+
+  goalId Int
+  goal   SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+}
