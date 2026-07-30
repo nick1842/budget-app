@@ -24,7 +24,12 @@ const [editAmount, setEditAmount] = useState("");
   const res = await fetch("/api/savings");
   const data = await res.json();
 
-  setGoals(data);
+if (!Array.isArray(data)) {
+  setGoals([]);
+  return;
+}
+
+setGoals(data);
 }
 
 

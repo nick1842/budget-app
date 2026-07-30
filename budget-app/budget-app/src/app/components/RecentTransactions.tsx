@@ -68,7 +68,12 @@ if (!confirm("Are you sure you want to delete this transaction?")) {
 
       const data = await response.json();
 
-      setTransactions(data);
+      if (!Array.isArray(data)) {
+  setTransactions([]);
+  return;
+}
+
+setTransactions(data);
 
     }
 

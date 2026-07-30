@@ -12,6 +12,7 @@ const categoryIcons: Record<string, string> = {
   other: "💵",
 };
 
+
 export default function BudgetProgress({
   refresh,
   onEdit,
@@ -21,59 +22,78 @@ export default function BudgetProgress({
   onEdit: (budget: any) => void;
   onBudgetChanged: () => void;
 }) {
+
   const [budgets, setBudgets] = useState<any[]>([]);
-const [spending, setSpending] = useState<Record<string, number>>({});
-const [showHistory, setShowHistory] = useState(false);
-const [weekRange, setWeekRange] = useState("");
+  const [spending, setSpending] = useState<Record<string, number>>({});
+  const [weekRange, setWeekRange] = useState("");
 
 
   async function deleteBudget(id: number) {
-    if (!confirm("Are you sure you want to delete this budget?")) {
+
+    if (!confirm("Delete this budget?")) {
       return;
     }
 
+
     await fetch("/api/budgets", {
       method: "DELETE",
+
       headers: {
         "Content-Type": "application/json",
       },
+
       body: JSON.stringify({
         id,
       }),
     });
 
 
-    setBudgets((currentBudgets) =>
-      currentBudgets.filter(
+    setBudgets((current) =>
+      current.filter(
         (budget) => budget.id !== id
       )
     );
+
+
+    onBudgetChanged();
   }
 
 
+
   useEffect(() => {
+
     async function loadData() {
 
       const budgetRes = await fetch("/api/budgets");
       const budgetData = await budgetRes.json();
-console.log("Budget data:", budgetData);
+
+if (!Array.isArray(budgetData)) {
+  setBudgets([]);
+} else {
+  setBudgets(budgetData);
+}
+
 
       const transactionRes = await fetch("/api/transactions");
       const transactions = await transactionRes.json();
 
-
-      const totals: Record<string, number> = {};
+if (!Array.isArray(transactions)) {
+  setSpending({});
+  return;
+}
 
 
       const today = new Date();
 
+
       const startOfWeek = new Date(today);
 
-startOfWeek.setDate(
-  today.getDate() - today.getDay()
-);
+      startOfWeek.setDate(
+        today.getDate() - today.getDay()
+      );
 
       startOfWeek.setHours(0, 0, 0, 0);
+
 
 
       const endOfWeek = new Date(startOfWeek);
@@ -82,25 +102,38 @@ startOfWeek.setDate(
         startOfWeek.getDate() + 7
       );
 
+
+
       const formatDate = (date: Date) =>
-  date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+        date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
 
 
-const displayEnd = new Date(endOfWeek);
 
-displayEnd.setDate(displayEnd.getDate() - 1);
+      const displayEnd = new Date(endOfWeek);
+
+      displayEnd.setDate(
+        displayEnd.getDate() - 1
+      );
 
 
-setWeekRange(
-  `${formatDate(startOfWeek)} - ${formatDate(displayEnd)}`
-);
+      setWeekRange(
+        `${formatDate(startOfWeek)} - ${formatDate(displayEnd)}`
+      );
+
+
+
+      const totals: Record<string, number> = {};
+
+
 
       transactions.forEach((transaction: any) => {
 
-        const transactionDate = new Date(transaction.date);
+        const transactionDate = new Date(
+          transaction.date
+        );
 
 
         if (
@@ -118,6 +151,7 @@ setWeekRange(
       });
 
 
+
       setBudgets(budgetData);
       setSpending(totals);
 
@@ -129,144 +163,181 @@ setWeekRange(
   }, [refresh]);
 
 
+
   return (
-    <div className="bg-zinc-900 rounded-2xl p-6 mt-8">
+
+    <div className="space-y-6">
+
+      <div>
+
+        <h2 className="text-xl font-bold">
+          Weekly Budget Progress
+        </h2>
+
+        <p className="text-gray-400">
+          Week: {weekRange}
+        </p>
+
+      </div>
 
 
-      <button
-        onClick={() => setShowHistory(!showHistory)}
-        className="bg-zinc-800 rounded-xl px-4 py-2 mb-4"
-      >
-        Weekly History {showHistory ? "▲" : "▼"}
-      </button>
 
+      {budgets.length === 0 && (
 
-      <h2 className="text-xl font-bold">
-  Budget Progress
-</h2>
+        <p className="text-gray-400">
+          No budgets created yet.
+        </p>
 
-<p className="text-gray-400 mb-5">
-  Week: {weekRange}
-</p>
+      )}
+
 
 
       <div className="space-y-6">
 
         {budgets.map((budget) => {
 
-          const spent = spending[budget.category] || 0;
+
+          const spent =
+            spending[budget.category] || 0;
 
 
           const rawPercent =
-  (spent / budget.amount) * 100;
-
-const percent = Math.min(rawPercent, 100);
+            (spent / budget.amount) * 100;
 
 
-let warning = "";
-let warningColor = "";
+          const percent =
+            Math.min(rawPercent, 100);
 
 
-if (rawPercent >= 100) {
 
-  warning = "🚨 WOAH WOAH WOAH";
-  warningColor = "text-red-400";
+          let message = "";
+          let color = "";
 
-} else if (rawPercent >= 90) {
 
-  warning = "🔴 watch it pal";
 
-  warningColor = "text-red-400";
+          if (rawPercent >= 100) {
 
-} else if (rawPercent >= 75) {
+            message = "🚨 Over budget";
+            color = "text-red-400";
 
-  warning = "🟠 Bro is NOT a baller";
+          } else if (rawPercent >= 75) {
 
-  warningColor = "text-orange-400";
+            message = "🟠 Getting close";
 
-} else if (rawPercent >= 50) {
+            color = "text-orange-400";
 
-  warning = "🟡 nice i suppose";
+          } else if (rawPercent >= 50) {
 
-  warningColor = "text-yellow-400";
+            message = "🟡 Halfway there";
 
-} else {
+            color = "text-yellow-400";
 
-  warning = "🟢 wow what a cool guy!";
+          } else {
 
-  warningColor = "text-green-400";
+            message = "🟢 Looking good";
 
-}
+            color = "text-green-400";
+
+          }
+
 
 
           return (
-            <div key={budget.id}>
+
+            <div
+              key={budget.id}
+              className="bg-black rounded-xl p-4"
+            >
 
 
-              <div className="flex justify-between mb-2">
+              <div className="flex justify-between">
 
                 <div>
-  <span>
-    {categoryIcons[budget.category]}{" "}
-    {budget.category}
-  </span>
 
-  <p className="text-gray-400 text-sm">
-    Created:{" "}
-    {new Date(budget.createdAt).toLocaleDateString(
-      "en-US",
-      {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }
-    )}
-  </p>
-</div>
+                  <h3 className="font-bold text-lg">
+
+                    {categoryIcons[budget.category]}{" "}
+
+                    {budget.category}
+
+                  </h3>
+
+
+                  <p className="text-gray-400 text-sm">
+
+                    Weekly limit: ${budget.amount.toFixed(2)}
+
+                  </p>
+
+                </div>
+
 
 
                 <div className="text-right">
 
-  <span>
-    ${spent.toFixed(2)} / ${budget.amount.toFixed(2)}
-  </span>
+                  <p>
 
-<p className="text-gray-400 text-sm">
-  {rawPercent.toFixed(0)}% used
-</p>
+                    ${spent.toFixed(2)}
 
-  <p className={warningColor}>
-    {warning}
-  </p>
+                    {" / "}
 
-</div>
+                    ${budget.amount.toFixed(2)}
+
+                  </p>
+
+
+                  <p className="text-gray-400 text-sm">
+
+                    {rawPercent.toFixed(0)}% used
+
+                  </p>
+
+
+                  <p className={color}>
+
+                    {message}
+
+                  </p>
+
+                </div>
+
 
               </div>
 
 
-              <div className="h-3 bg-black rounded-full">
-
-  <div
-    className={`h-3 rounded-full ${
-      rawPercent >= 100
-        ? "bg-red-500"
-        : rawPercent >= 90
-        ? "bg-red-400"
-        : rawPercent >= 75
-        ? "bg-orange-400"
-        : rawPercent >= 50
-        ? "bg-yellow-400"
-        : "bg-green-500"
-    }`}
-    style={{
-      width: `${Math.min(rawPercent, 100)}%`,
-    }}
-  />
-
-</div>
 
 
-              <div className="flex gap-4 mt-3">
+              <div className="h-3 bg-zinc-800 rounded-full mt-4">
+
+                <div
+
+                  className={`
+                    h-3
+                    rounded-full
+                    ${
+                      rawPercent >= 100
+                        ? "bg-red-500"
+                        : rawPercent >= 75
+                        ? "bg-orange-400"
+                        : rawPercent >= 50
+                        ? "bg-yellow-400"
+                        : "bg-green-500"
+                    }
+                  `}
+
+                  style={{
+                    width: `${percent}%`,
+                  }}
+
+                />
+
+              </div>
+
+
+
+
+              <div className="flex gap-4 mt-4">
+
 
                 <button
                   onClick={() => onEdit(budget)}
@@ -276,6 +347,7 @@ if (rawPercent >= 100) {
                 </button>
 
 
+
                 <button
                   onClick={() => deleteBudget(budget.id)}
                   className="text-red-400"
@@ -283,10 +355,12 @@ if (rawPercent >= 100) {
                   🗑 Delete
                 </button>
 
+
               </div>
 
 
             </div>
+
           );
 
         })}
@@ -294,22 +368,8 @@ if (rawPercent >= 100) {
       </div>
 
 
-      {showHistory && (
-        <div className="mt-6 bg-black rounded-xl p-4">
-
-          <h3 className="font-bold mb-3">
-            Previous Weeks
-          </h3>
-
-
-          <p className="text-gray-400">
-            History will appear here
-          </p>
-
-        </div>
-      )}
-
-
     </div>
+
   );
+
 }

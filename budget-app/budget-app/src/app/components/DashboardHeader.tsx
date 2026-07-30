@@ -5,7 +5,7 @@ export default function DashboardHeader() {
     <div className="bg-zinc-900 rounded-2xl p-6 mt-6">
 
       <h1 className="text-2xl font-bold">
-        Good morning 👋
+        🤫
       </h1>
 
       <p className="text-gray-400 mt-1">

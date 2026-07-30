@@ -3,23 +3,34 @@ import { prisma } from "@/lib/prisma";
 
 
 export async function GET() {
+
   try {
-    const transactions = await prisma.transaction.findMany({
-      orderBy: {
-        date: "desc",
-      },
-    });
+
+    const transactions =
+      await prisma.transaction.findMany({
+        orderBy: {
+          date: "desc",
+        },
+      });
+
 
     return NextResponse.json(transactions);
 
+
   } catch (error) {
-    console.error("GET ERROR:", error);
+
+    console.error("GET TRANSACTIONS ERROR:", error);
+
 
     return NextResponse.json(
-      { error: String(error) },
-      { status: 500 }
+      [],
+      {
+        status: 200,
+      }
     );
+
   }
+
 }
 
 

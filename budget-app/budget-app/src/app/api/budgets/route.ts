@@ -4,21 +4,20 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const budgets = await prisma.budget.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
 
-    return Response.json(budgets);
+    const budgets = await prisma.budget.findMany();
+
+    return NextResponse.json(budgets);
 
   } catch (error) {
-    console.error("GET BUDGET ERROR:", error);
 
-    return Response.json(
-      { error: String(error) },
-      { status: 500 }
+    console.error("BUDGET ERROR:", error);
+
+    return NextResponse.json(
+      [],
+      { status: 200 }
     );
+
   }
 }
 
